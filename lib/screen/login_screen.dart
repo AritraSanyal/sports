@@ -95,17 +95,32 @@ class _LoginScreenState extends State<LoginScreen>
         }
         // Fetch full user profile from Realtime Database
         final userId = userCredential.user!.uid;
+        print('LoginScreen: Fetching user data for ID: $userId');
         final db = FirebaseDatabase.instance.ref();
         final snapshot = await db.child('users/$userId').get();
         if (snapshot.exists) {
           final userData = Map<String, dynamic>.from(snapshot.value as Map);
+          print('LoginScreen: User data from Firebase: $userData');
           final userModel = UserModel.fromJson(userId, userData);
+          print('LoginScreen: Created user model with bio: ${userModel.bio}');
+          print(
+            'LoginScreen: Created user model with hobbies: ${userModel.hobbies}',
+          );
+          print(
+            'LoginScreen: Created user model with lifestyle: ${userModel.lifestyle}',
+          );
+          print(
+            'LoginScreen: Created user model with imageUrl: ${userModel.imageUrl}',
+          );
           if (mounted) {
             Provider.of<UserProvider>(
               context,
               listen: false,
             ).setUser(userModel);
+            print('LoginScreen: User set in provider');
           }
+        } else {
+          print('LoginScreen: No user data found for ID: $userId');
         }
         if (!mounted) return;
         await showDialog(
@@ -146,15 +161,29 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  void _bypassLogin() {
+  void _bypassLogin() async {
+    final userId = const Uuid().v4();
     final user = UserModel(
-      id: const Uuid().v4(),
+      id: userId,
       name: 'Bypass User',
       email: 'bypass@example.com',
       password: 'BypassPassword123!',
       age: 30,
       imageUrl: '',
+      bio: 'This is a bypass user for testing purposes.',
+      hobbies: ['Testing', 'Development'],
+      lifestyle: ['Active'],
     );
+
+    // Save to Firebase Database
+    try {
+      final db = FirebaseDatabase.instance.ref();
+      await db.child('users/$userId').set(user.toJson());
+      print('LoginScreen: Bypass user saved to Firebase Database');
+    } catch (e) {
+      print('LoginScreen: Failed to save bypass user to Firebase: $e');
+    }
+
     Provider.of<UserProvider>(context, listen: false).setUser(user);
     Navigator.pushReplacement(
       context,

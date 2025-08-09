@@ -30,42 +30,55 @@ class UserModel {
   });
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'email': email,
-        'password': password,
-        'age': age,
-        'image_url': imageUrl,
-        'bio': bio,
-        'location': location,
-        'hobbies': hobbies,
-        'lifestyle': lifestyle,
-        'phone_number': phoneNumber,
-        'date_of_birth': dateOfBirth?.toIso8601String(),
-        'gender': gender,
-      };
+    'name': name,
+    'email': email,
+    'password': password,
+    'age': age,
+    'image_url': imageUrl,
+    'bio': bio,
+    'location': location,
+    'hobbies': hobbies,
+    'lifestyle': lifestyle,
+    'phone_number': phoneNumber,
+    'date_of_birth': dateOfBirth?.toIso8601String(),
+    'gender': gender,
+  };
 
   factory UserModel.fromJson(String id, Map<String, dynamic> json) {
-    return UserModel(
+    // Debug: Print the JSON data to see what's being loaded
+    print('UserModel.fromJson: Loading user data: $json');
+
+    final user = UserModel(
       id: id,
-      name: json['name'] as String,
-      email: json['email'] as String,
-      password: json['password'] as String,
+      name: json['name'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      password: json['password'] as String? ?? '',
       age: json['age'] as int?,
       imageUrl: json['image_url'] as String?,
       bio: json['bio'] as String?,
       location: json['location'] as String?,
-      hobbies: json['hobbies'] != null 
-          ? List<String>.from(json['hobbies'] as List)
-          : null,
-      lifestyle: json['lifestyle'] != null 
-          ? List<String>.from(json['lifestyle'] as List)
-          : null,
+      hobbies:
+          json['hobbies'] != null
+              ? List<String>.from(json['hobbies'] as List)
+              : null,
+      lifestyle:
+          json['lifestyle'] != null
+              ? List<String>.from(json['lifestyle'] as List)
+              : null,
       phoneNumber: json['phone_number'] as String?,
-      dateOfBirth: json['date_of_birth'] != null 
-          ? DateTime.parse(json['date_of_birth'] as String)
-          : null,
+      dateOfBirth:
+          json['date_of_birth'] != null
+              ? DateTime.parse(json['date_of_birth'] as String)
+              : null,
       gender: json['gender'] as String?,
     );
+
+    print('UserModel.fromJson: Created user with bio: ${user.bio}');
+    print('UserModel.fromJson: Created user with hobbies: ${user.hobbies}');
+    print('UserModel.fromJson: Created user with lifestyle: ${user.lifestyle}');
+    print('UserModel.fromJson: Created user with imageUrl: ${user.imageUrl}');
+
+    return user;
   }
 
   // Helper method to get default bio if none is provided
@@ -106,5 +119,10 @@ class UserModel {
       return '$age years old';
     }
     return 'Age not set';
+  }
+
+  // Helper method to get profile image
+  String? get profileImage {
+    return imageUrl;
   }
 }

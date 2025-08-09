@@ -3,6 +3,7 @@ import 'package:flutter_app/screen/login_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../model/user_model.dart';
+import '../services/auth_service.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:image_picker/image_picker.dart';
@@ -23,7 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   late AnimationController _carouselController;
   late ScrollController _scrollController;
   late PageController _pageController;
-  
+
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _pulseAnimation;
@@ -32,9 +33,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   bool _isLoading = false;
   bool _isBioExpanded = false;
   bool _isEditing = false;
-  int _currentImageIndex = 0;
-  List<String> _userImages = [];
+  String? _profileImageUrl;
   final ImagePicker _picker = ImagePicker();
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -46,8 +47,18 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   void _initializeUserImages() {
     final user = Provider.of<UserProvider>(context, listen: false).user;
-    if (user?.imageUrl != null && user!.imageUrl!.isNotEmpty) {
-      _userImages = [user.imageUrl!];
+    print('ProfileScreen: Initializing user images');
+    print('ProfileScreen: User is null: ${user == null}');
+    if (user != null) {
+      print('ProfileScreen: User ID: ${user.id}');
+      print('ProfileScreen: User bio: ${user.bio}');
+      print('ProfileScreen: User hobbies: ${user.hobbies}');
+      print('ProfileScreen: User lifestyle: ${user.lifestyle}');
+      print('ProfileScreen: User imageUrl: ${user.imageUrl}');
+      _profileImageUrl = user.profileImage;
+      print('ProfileScreen: Set _profileImageUrl to: $_profileImageUrl');
+    } else {
+      print('ProfileScreen: No user found');
     }
   }
 
@@ -75,37 +86,27 @@ class _ProfileScreenState extends State<ProfileScreen>
     _scrollController = ScrollController();
     _pageController = PageController();
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _mainController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _mainController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _mainController,
-      curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _mainController,
+        curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
+      ),
+    );
 
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.05,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
 
-    _parallaxAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _parallaxController,
-      curve: Curves.easeInOut,
-    ));
+    _parallaxAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _parallaxController, curve: Curves.easeInOut),
+    );
 
     _pulseController.repeat(reverse: true);
     _parallaxController.repeat(reverse: true);
@@ -137,18 +138,17 @@ class _ProfileScreenState extends State<ProfileScreen>
       source: ImageSource.gallery,
       imageQuality: 80,
     );
-    
+
     if (image != null) {
       final bytes = await image.readAsBytes();
       final base64String = base64Encode(bytes);
       final imageUrl = 'data:image/jpeg;base64,$base64String';
-      
+
       setState(() {
-        _userImages.add(imageUrl);
-        _currentImageIndex = _userImages.length - 1;
+        _profileImageUrl = imageUrl;
       });
-      
-      // Update user model with new image
+
+      // Update user model with new profile picture
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final currentUser = userProvider.user;
       if (currentUser != null) {
@@ -158,7 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           email: currentUser.email,
           password: currentUser.password,
           age: currentUser.age,
-          imageUrl: imageUrl,
+          imageUrl: imageUrl, // New profile picture
           bio: currentUser.bio,
           location: currentUser.location,
           hobbies: currentUser.hobbies,
@@ -168,17 +168,18 @@ class _ProfileScreenState extends State<ProfileScreen>
           gender: currentUser.gender,
         );
         userProvider.setUser(updatedUser);
+
+        // Save to server
+        try {
+          final success = await _authService.updateUser(updatedUser);
+          print(
+            'ProfileScreen: Profile picture saved to server successfully: $success',
+          );
+        } catch (e) {
+          print('Failed to save profile picture to server: $e');
+        }
       }
     }
-  }
-
-  void _removeImage(int index) {
-    setState(() {
-      _userImages.removeAt(index);
-      if (_currentImageIndex >= _userImages.length) {
-        _currentImageIndex = _userImages.length - 1;
-      }
-    });
   }
 
   @override
@@ -201,12 +202,13 @@ class _ProfileScreenState extends State<ProfileScreen>
               );
             },
           ),
-          
+
           // Main Content
           SafeArea(
-            child: _isLoading
-                ? _buildSkeletonScreen()
-                : _buildMainContent(context, user, screenSize),
+            child:
+                _isLoading
+                    ? _buildSkeletonScreen()
+                    : _buildMainContent(context, user, screenSize),
           ),
         ],
       ),
@@ -265,7 +267,11 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildMainContent(BuildContext context, dynamic user, Size screenSize) {
+  Widget _buildMainContent(
+    BuildContext context,
+    dynamic user,
+    Size screenSize,
+  ) {
     return AnimatedBuilder(
       animation: _mainController,
       builder: (context, child) {
@@ -279,7 +285,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               slivers: [
                 // Header Section with Image Carousel
                 _buildHeaderSection(user, screenSize),
-                
+
                 // Profile Content
                 SliverToBoxAdapter(
                   child: Padding(
@@ -287,27 +293,27 @@ class _ProfileScreenState extends State<ProfileScreen>
                     child: Column(
                       children: [
                         const SizedBox(height: 20),
-                        
+
                         // Basic Info Section
                         _buildBasicInfoSection(user),
                         const SizedBox(height: 24),
-                        
+
                         // Bio Section
                         _buildBioSection(user),
                         const SizedBox(height: 24),
-                        
+
                         // Personal Details Section
                         _buildPersonalDetailsSection(user),
                         const SizedBox(height: 24),
-                        
+
                         // Hobbies & Interests Section
                         _buildHobbiesSection(),
                         const SizedBox(height: 24),
-                        
+
                         // Lifestyle Section
                         _buildLifestyleSection(),
                         const SizedBox(height: 24),
-                        
+
                         // Action Buttons Section
                         _buildActionButtonsSection(context),
                         const SizedBox(height: 40),
@@ -334,11 +340,9 @@ class _ProfileScreenState extends State<ProfileScreen>
         background: Container(
           child: Stack(
             children: [
-              // Image Carousel with proper scroll handling
-              Positioned.fill(
-                child: _buildImageCarousel(),
-              ),
-              
+              // Profile Image
+              Positioned.fill(child: _buildProfileImage()),
+
               // Gradient Overlay
               Positioned.fill(
                 child: Container(
@@ -354,7 +358,33 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ),
                 ),
               ),
-              
+
+              // Edit Mode Indicator
+              if (_isEditing)
+                Positioned(
+                  top: 60,
+                  left: 20,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.white, width: 1),
+                    ),
+                    child: const Text(
+                      'Edit Mode',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+
               // Floating Action Buttons
               Positioned(
                 top: 60,
@@ -367,52 +397,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                     const SizedBox(width: 8),
                     _buildFloatingActionButton(
-                      icon: Icons.edit,
+                      icon: _isEditing ? Icons.check : Icons.edit,
                       onPressed: _toggleEditMode,
                     ),
                   ],
                 ),
               ),
-              
-              // Carousel Indicators
-              if (_userImages.length > 1)
-                Positioned(
-                  bottom: 20,
-                  left: 0,
-                  right: 0,
-                  child: _buildCarouselIndicators(),
-                ),
-              
-              // Navigation Buttons
-              if (_userImages.length > 1)
-                Positioned(
-                  top: 0,
-                  bottom: 0,
-                  left: 0,
-                  child: _buildNavigationButton(Icons.chevron_left, () {
-                    if (_currentImageIndex > 0) {
-                      _pageController.previousPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    }
-                  }),
-                ),
-              
-              if (_userImages.length > 1)
-                Positioned(
-                  top: 0,
-                  bottom: 0,
-                  right: 0,
-                  child: _buildNavigationButton(Icons.chevron_right, () {
-                    if (_currentImageIndex < _userImages.length - 1) {
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    }
-                  }),
-                ),
             ],
           ),
         ),
@@ -420,112 +410,26 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildImageCarousel() {
-    if (_userImages.isEmpty) {
+  Widget _buildProfileImage() {
+    if (_profileImageUrl == null || _profileImageUrl!.isEmpty) {
       return _buildDefaultAvatar();
     }
 
     return Container(
       width: double.infinity,
       height: double.infinity,
-      child: PageView.builder(
-        controller: _pageController,
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        onPageChanged: (index) {
-          setState(() {
-            _currentImageIndex = index;
-          });
-        },
-        itemCount: _userImages.length,
-        itemBuilder: (context, index) {
-          return Container(
-            width: double.infinity,
-            height: double.infinity,
-            child: Stack(
-              children: [
-                Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF8B5CF6),
-                        const Color(0xFF3B82F6),
-                        const Color(0xFF1E40AF),
-                      ],
-                    ),
-                  ),
-                  child: _buildUserImage(_userImages[index]),
-                ),
-                if (_isEditing)
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: GestureDetector(
-                      onTap: () => _removeImage(index),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.8),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildCarouselIndicators() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(_userImages.length, (index) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: _currentImageIndex == index ? 20 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: _currentImageIndex == index 
-                ? Colors.white 
-                : Colors.white.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildNavigationButton(IconData icon, VoidCallback onPressed) {
-    return Container(
-      width: 50,
-      child: GestureDetector(
-        onTap: onPressed,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: 24,
-          ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF8B5CF6),
+            const Color(0xFF3B82F6),
+            const Color(0xFF1E40AF),
+          ],
         ),
       ),
+      child: _buildUserImage(_profileImageUrl!),
     );
   }
 
@@ -542,10 +446,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     return Container(
       decoration: BoxDecoration(
-        image: DecorationImage(
-          image: provider,
-          fit: BoxFit.cover,
-        ),
+        image: DecorationImage(image: provider, fit: BoxFit.cover),
       ),
     );
   }
@@ -563,7 +464,10 @@ class _ProfileScreenState extends State<ProfileScreen>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withOpacity(0.2),
-                border: Border.all(color: Colors.white.withOpacity(0.3), width: 4),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 4,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.3),
@@ -572,11 +476,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.person,
-                size: 60,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.person, size: 60, color: Colors.white),
             ),
           );
         },
@@ -693,7 +593,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget _buildBioSection(dynamic user) {
     final bioText = user?.displayBio ?? 'No bio available';
     final isLongBio = bioText.length > 100;
-    
+
     return _buildGlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -715,9 +615,10 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 12),
           AnimatedCrossFade(
             duration: const Duration(milliseconds: 300),
-            crossFadeState: _isBioExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
+            crossFadeState:
+                _isBioExpanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
             firstChild: Text(
               isLongBio ? '${bioText.substring(0, 100)}...' : bioText,
               style: TextStyle(
@@ -738,7 +639,10 @@ class _ProfileScreenState extends State<ProfileScreen>
             GestureDetector(
               onTap: () => setState(() => _isBioExpanded = !_isBioExpanded),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(15),
@@ -783,13 +687,23 @@ class _ProfileScreenState extends State<ProfileScreen>
             _buildDetailItem(Icons.person_outline, 'Gender', user.gender!),
           if (user?.location != null && user.location!.isNotEmpty)
             _buildDetailItem(Icons.location_on, 'Location', user.location!),
-          _buildDetailItem(Icons.verified, 'Status', 'Verified', isVerified: true),
+          _buildDetailItem(
+            Icons.verified,
+            'Status',
+            'Verified',
+            isVerified: true,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailItem(IconData icon, String label, String value, {bool isVerified = false}) {
+  Widget _buildDetailItem(
+    IconData icon,
+    String label,
+    String value, {
+    bool isVerified = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -858,9 +772,18 @@ class _ProfileScreenState extends State<ProfileScreen>
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: (user?.displayHobbies ?? ['Fitness', 'Travel', 'Photography', 'Cooking', 'Reading', 'Music'])
-                .map((hobby) => _buildHobbyChip(hobby))
-                .toList(),
+            children:
+                (user?.displayHobbies ??
+                        [
+                          'Fitness',
+                          'Travel',
+                          'Photography',
+                          'Cooking',
+                          'Reading',
+                          'Music',
+                        ])
+                    .map((hobby) => _buildHobbyChip(hobby))
+                    .toList(),
           ),
         ],
       ),
@@ -901,8 +824,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildLifestyleSection() {
     final user = Provider.of<UserProvider>(context).user;
-    final lifestyleItems = user?.displayLifestyle ?? ['Active', 'Traveler', 'Foodie'];
-    
+    final lifestyleItems =
+        user?.displayLifestyle ?? ['Active', 'Traveler', 'Foodie'];
+
     return _buildGlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -918,7 +842,13 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: lifestyleItems.map((item) => _buildLifestyleItem(_getLifestyleIcon(item), item)).toList(),
+            children:
+                lifestyleItems
+                    .map(
+                      (item) =>
+                          _buildLifestyleItem(_getLifestyleIcon(item), item),
+                    )
+                    .toList(),
           ),
         ],
       ),
@@ -987,16 +917,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           icon: Icons.edit,
           label: 'Edit Profile',
           onPressed: () {
-            // TODO: Navigate to edit profile screen
             _showEditProfileDialog(context);
-          },
-        ),
-        const SizedBox(height: 12),
-        _buildGradientButton(
-          icon: Icons.settings,
-          label: 'Settings',
-          onPressed: () {
-            // TODO: Implement settings functionality
           },
         ),
         const SizedBox(height: 12),
@@ -1020,46 +941,672 @@ class _ProfileScreenState extends State<ProfileScreen>
   void _showEditProfileDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white.withOpacity(0.95),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Edit Profile'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Edit Personal Info'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Navigate to edit personal info screen
-              },
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.white.withOpacity(0.95),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Manage Photos'),
-              onTap: () {
-                Navigator.pop(context);
-                _toggleEditMode();
-              },
+            title: const Text('Edit Profile'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.edit),
+                  title: const Text('Edit Personal Info'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showEditPersonalInfoDialog(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('Edit Bio'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showEditBioDialog(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.sports_esports),
+                  title: const Text('Edit Hobbies & Interests'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showEditHobbiesDialog(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.fitness_center),
+                  title: const Text('Edit Lifestyle'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showEditLifestyleDialog(context);
+                  },
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.security),
-              title: const Text('Privacy Settings'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Navigate to privacy settings
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+            ],
           ),
-        ],
-      ),
+    );
+  }
+
+  void _showEditPersonalInfoDialog(BuildContext context) {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final nameController = TextEditingController(text: user?.name ?? '');
+    final emailController = TextEditingController(text: user?.email ?? '');
+    final phoneController = TextEditingController(
+      text: user?.phoneNumber ?? '',
+    );
+    final locationController = TextEditingController(
+      text: user?.location ?? '',
+    );
+    final ageController = TextEditingController(
+      text: user?.age?.toString() ?? '',
+    );
+    final genderController = TextEditingController(text: user?.gender ?? '');
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.white.withOpacity(0.95),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text('Edit Personal Info'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                  ),
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                  ),
+                  TextField(
+                    controller: phoneController,
+                    decoration: const InputDecoration(
+                      labelText: 'Phone Number',
+                    ),
+                  ),
+                  TextField(
+                    controller: locationController,
+                    decoration: const InputDecoration(labelText: 'Location'),
+                  ),
+                  TextField(
+                    controller: ageController,
+                    decoration: const InputDecoration(labelText: 'Age'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  TextField(
+                    controller: genderController,
+                    decoration: const InputDecoration(labelText: 'Gender'),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  // Update user with new info
+                  final userProvider = Provider.of<UserProvider>(
+                    context,
+                    listen: false,
+                  );
+                  final currentUser = userProvider.user;
+                  if (currentUser != null) {
+                    final updatedUser = UserModel(
+                      id: currentUser.id,
+                      name: nameController.text,
+                      email: emailController.text,
+                      password: currentUser.password,
+                      age: int.tryParse(ageController.text),
+                      imageUrl: currentUser.imageUrl,
+                      bio: currentUser.bio,
+                      location: locationController.text,
+                      hobbies: currentUser.hobbies,
+                      lifestyle: currentUser.lifestyle,
+                      phoneNumber: phoneController.text,
+                      dateOfBirth: currentUser.dateOfBirth,
+                      gender: genderController.text,
+                    );
+                    userProvider.setUser(updatedUser);
+
+                    // Save to server
+                    try {
+                      await _authService.updateUser(updatedUser);
+                    } catch (e) {
+                      print('Failed to save personal info to server: $e');
+                    }
+                  }
+                  Navigator.pop(context);
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _showEditBioDialog(BuildContext context) {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final bioController = TextEditingController(text: user?.bio ?? '');
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.white.withOpacity(0.95),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text('Edit Bio'),
+            content: TextField(
+              controller: bioController,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                labelText: 'About Me',
+                hintText: 'Tell us about yourself...',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final userProvider = Provider.of<UserProvider>(
+                    context,
+                    listen: false,
+                  );
+                  final currentUser = userProvider.user;
+                  if (currentUser != null) {
+                    final updatedUser = UserModel(
+                      id: currentUser.id,
+                      name: currentUser.name,
+                      email: currentUser.email,
+                      password: currentUser.password,
+                      age: currentUser.age,
+                      imageUrl: currentUser.imageUrl,
+                      bio: bioController.text,
+                      location: currentUser.location,
+                      hobbies: currentUser.hobbies,
+                      lifestyle: currentUser.lifestyle,
+                      phoneNumber: currentUser.phoneNumber,
+                      dateOfBirth: currentUser.dateOfBirth,
+                      gender: currentUser.gender,
+                    );
+                    userProvider.setUser(updatedUser);
+
+                    // Save to server
+                    try {
+                      await _authService.updateUser(updatedUser);
+                      print('ProfileScreen: Bio saved to server successfully');
+                    } catch (e) {
+                      print('Failed to save bio to server: $e');
+                    }
+                  }
+                  Navigator.pop(context);
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _showEditHobbiesDialog(BuildContext context) {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final currentHobbies = user?.hobbies ?? [];
+
+    // Available hobby options with their icons
+    final availableHobbies = [
+      {'name': 'Fitness', 'icon': Icons.fitness_center},
+      {'name': 'Travel', 'icon': Icons.flight},
+      {'name': 'Photography', 'icon': Icons.camera_alt},
+      {'name': 'Cooking', 'icon': Icons.restaurant_menu},
+      {'name': 'Reading', 'icon': Icons.book},
+      {'name': 'Music', 'icon': Icons.music_note},
+      {'name': 'Gaming', 'icon': Icons.games},
+      {'name': 'Art', 'icon': Icons.palette},
+      {'name': 'Dancing', 'icon': Icons.music_note},
+      {'name': 'Swimming', 'icon': Icons.pool},
+      {'name': 'Cycling', 'icon': Icons.directions_bike},
+      {'name': 'Running', 'icon': Icons.directions_run},
+      {'name': 'Yoga', 'icon': Icons.self_improvement},
+      {'name': 'Meditation', 'icon': Icons.psychology},
+      {'name': 'Technology', 'icon': Icons.computer},
+      {'name': 'Nature', 'icon': Icons.nature},
+      {'name': 'Writing', 'icon': Icons.edit},
+      {'name': 'Painting', 'icon': Icons.brush},
+      {'name': 'Gardening', 'icon': Icons.local_florist},
+      {'name': 'Hiking', 'icon': Icons.terrain},
+      {'name': 'Soccer', 'icon': Icons.sports_soccer},
+      {'name': 'Basketball', 'icon': Icons.sports_basketball},
+      {'name': 'Tennis', 'icon': Icons.sports_tennis},
+      {'name': 'Volleyball', 'icon': Icons.sports_volleyball},
+    ];
+
+    // Create a map to track selected hobbies
+    Map<String, bool> selectedHobbies = {};
+    for (var hobby in availableHobbies) {
+      final name = hobby['name'] as String;
+      selectedHobbies[name] = currentHobbies.contains(name);
+    }
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                backgroundColor: Colors.white.withOpacity(0.95),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: Row(
+                  children: [
+                    const Icon(Icons.sports_esports, color: Colors.green),
+                    const SizedBox(width: 8),
+                    const Text('Edit Hobbies & Interests'),
+                  ],
+                ),
+                content: SizedBox(
+                  width: double.maxFinite,
+                  height: 400,
+                  child: Column(
+                    children: [
+                      Text(
+                        'Select up to 8 hobbies & interests',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 3,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                              ),
+                          itemCount: availableHobbies.length,
+                          itemBuilder: (context, index) {
+                            final hobby = availableHobbies[index];
+                            final name = hobby['name'] as String;
+                            final icon = hobby['icon'] as IconData;
+                            final isSelected = selectedHobbies[name] ?? false;
+                            final selectedCount =
+                                selectedHobbies.values
+                                    .where((selected) => selected)
+                                    .length;
+                            final canSelect = isSelected || selectedCount < 8;
+
+                            return InkWell(
+                              onTap:
+                                  canSelect
+                                      ? () {
+                                        setState(() {
+                                          selectedHobbies[name] = !isSelected;
+                                        });
+                                      }
+                                      : null,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color:
+                                      isSelected
+                                          ? Colors.green.withOpacity(0.2)
+                                          : Colors.grey.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color:
+                                        isSelected
+                                            ? Colors.green
+                                            : Colors.grey.withOpacity(0.3),
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                      value: isSelected,
+                                      onChanged:
+                                          canSelect
+                                              ? (value) {
+                                                setState(() {
+                                                  selectedHobbies[name] =
+                                                      value ?? false;
+                                                });
+                                              }
+                                              : null,
+                                      activeColor: Colors.green,
+                                    ),
+                                    Icon(
+                                      icon,
+                                      color:
+                                          isSelected
+                                              ? Colors.green
+                                              : Colors.grey,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        name,
+                                        style: TextStyle(
+                                          color:
+                                              isSelected
+                                                  ? Colors.green
+                                                  : Colors.grey[700],
+                                          fontWeight:
+                                              isSelected
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Selected: ${selectedHobbies.values.where((selected) => selected).length}/8',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      final selectedHobbiesList =
+                          selectedHobbies.entries
+                              .where((entry) => entry.value)
+                              .map((entry) => entry.key)
+                              .toList();
+
+                      final userProvider = Provider.of<UserProvider>(
+                        context,
+                        listen: false,
+                      );
+                      final currentUser = userProvider.user;
+                      if (currentUser != null) {
+                        final updatedUser = UserModel(
+                          id: currentUser.id,
+                          name: currentUser.name,
+                          email: currentUser.email,
+                          password: currentUser.password,
+                          age: currentUser.age,
+                          imageUrl: currentUser.imageUrl,
+                          bio: currentUser.bio,
+                          location: currentUser.location,
+                          hobbies: selectedHobbiesList,
+                          lifestyle: currentUser.lifestyle,
+                          phoneNumber: currentUser.phoneNumber,
+                          dateOfBirth: currentUser.dateOfBirth,
+                          gender: currentUser.gender,
+                        );
+                        userProvider.setUser(updatedUser);
+
+                        // Save to server
+                        try {
+                          await _authService.updateUser(updatedUser);
+                        } catch (e) {
+                          print('Failed to save hobbies to server: $e');
+                        }
+                      }
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Save'),
+                  ),
+                ],
+              );
+            },
+          ),
+    );
+  }
+
+  void _showEditLifestyleDialog(BuildContext context) {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final currentLifestyle = user?.lifestyle ?? [];
+
+    // Available lifestyle options with their icons
+    final availableLifestyles = [
+      {'name': 'Active', 'icon': Icons.fitness_center},
+      {'name': 'Traveler', 'icon': Icons.flight},
+      {'name': 'Foodie', 'icon': Icons.restaurant},
+      {'name': 'Gamer', 'icon': Icons.games},
+      {'name': 'Reader', 'icon': Icons.book},
+      {'name': 'Musician', 'icon': Icons.music_note},
+      {'name': 'Photographer', 'icon': Icons.camera_alt},
+      {'name': 'Cooking', 'icon': Icons.restaurant_menu},
+      {'name': 'Yoga', 'icon': Icons.self_improvement},
+      {'name': 'Cycling', 'icon': Icons.directions_bike},
+      {'name': 'Swimming', 'icon': Icons.pool},
+      {'name': 'Running', 'icon': Icons.directions_run},
+      {'name': 'Meditation', 'icon': Icons.psychology},
+      {'name': 'Art', 'icon': Icons.palette},
+      {'name': 'Technology', 'icon': Icons.computer},
+      {'name': 'Nature', 'icon': Icons.nature},
+    ];
+
+    // Create a map to track selected lifestyles
+    Map<String, bool> selectedLifestyles = {};
+    for (var lifestyle in availableLifestyles) {
+      final name = lifestyle['name'] as String;
+      selectedLifestyles[name] = currentLifestyle.contains(name);
+    }
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                backgroundColor: Colors.white.withOpacity(0.95),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: Row(
+                  children: [
+                    const Icon(Icons.fitness_center, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    const Text('Edit Lifestyle'),
+                  ],
+                ),
+                content: SizedBox(
+                  width: double.maxFinite,
+                  height: 400,
+                  child: Column(
+                    children: [
+                      Text(
+                        'Select up to 6 lifestyle preferences',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 3,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                              ),
+                          itemCount: availableLifestyles.length,
+                          itemBuilder: (context, index) {
+                            final lifestyle = availableLifestyles[index];
+                            final name = lifestyle['name'] as String;
+                            final icon = lifestyle['icon'] as IconData;
+                            final isSelected =
+                                selectedLifestyles[name] ?? false;
+                            final selectedCount =
+                                selectedLifestyles.values
+                                    .where((selected) => selected)
+                                    .length;
+                            final canSelect = isSelected || selectedCount < 6;
+
+                            return InkWell(
+                              onTap:
+                                  canSelect
+                                      ? () {
+                                        setState(() {
+                                          selectedLifestyles[name] =
+                                              !isSelected;
+                                        });
+                                      }
+                                      : null,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color:
+                                      isSelected
+                                          ? Colors.blue.withOpacity(0.2)
+                                          : Colors.grey.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color:
+                                        isSelected
+                                            ? Colors.blue
+                                            : Colors.grey.withOpacity(0.3),
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                      value: isSelected,
+                                      onChanged:
+                                          canSelect
+                                              ? (value) {
+                                                setState(() {
+                                                  selectedLifestyles[name] =
+                                                      value ?? false;
+                                                });
+                                              }
+                                              : null,
+                                      activeColor: Colors.blue,
+                                    ),
+                                    Icon(
+                                      icon,
+                                      color:
+                                          isSelected
+                                              ? Colors.blue
+                                              : Colors.grey,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        name,
+                                        style: TextStyle(
+                                          color:
+                                              isSelected
+                                                  ? Colors.blue
+                                                  : Colors.grey[700],
+                                          fontWeight:
+                                              isSelected
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Selected: ${selectedLifestyles.values.where((selected) => selected).length}/6',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      final selectedLifestyleList =
+                          selectedLifestyles.entries
+                              .where((entry) => entry.value)
+                              .map((entry) => entry.key)
+                              .toList();
+
+                      final userProvider = Provider.of<UserProvider>(
+                        context,
+                        listen: false,
+                      );
+                      final currentUser = userProvider.user;
+                      if (currentUser != null) {
+                        final updatedUser = UserModel(
+                          id: currentUser.id,
+                          name: currentUser.name,
+                          email: currentUser.email,
+                          password: currentUser.password,
+                          age: currentUser.age,
+                          imageUrl: currentUser.imageUrl,
+                          bio: currentUser.bio,
+                          location: currentUser.location,
+                          hobbies: currentUser.hobbies,
+                          lifestyle: selectedLifestyleList,
+                          phoneNumber: currentUser.phoneNumber,
+                          dateOfBirth: currentUser.dateOfBirth,
+                          gender: currentUser.gender,
+                        );
+                        userProvider.setUser(updatedUser);
+
+                        // Save to server
+                        try {
+                          await _authService.updateUser(updatedUser);
+                        } catch (e) {
+                          print('Failed to save lifestyle to server: $e');
+                        }
+                      }
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Save'),
+                  ),
+                ],
+              );
+            },
+          ),
     );
   }
 
@@ -1074,18 +1621,20 @@ class _ProfileScreenState extends State<ProfileScreen>
       height: 50,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDestructive
-              ? [Colors.red.shade400, Colors.red.shade600]
-              : [
-                  Colors.white.withOpacity(0.3),
-                  Colors.white.withOpacity(0.1),
-                ],
+          colors:
+              isDestructive
+                  ? [Colors.red.shade400, Colors.red.shade600]
+                  : [
+                    Colors.white.withOpacity(0.3),
+                    Colors.white.withOpacity(0.1),
+                  ],
         ),
         borderRadius: BorderRadius.circular(25),
         border: Border.all(
-          color: isDestructive
-              ? Colors.red.shade300
-              : Colors.white.withOpacity(0.3),
+          color:
+              isDestructive
+                  ? Colors.red.shade300
+                  : Colors.white.withOpacity(0.3),
         ),
       ),
       child: Material(
@@ -1141,23 +1690,25 @@ class ModernBackgroundPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          const Color(0xFF8B5CF6),
-          const Color(0xFF3B82F6),
-          const Color(0xFF1E40AF),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    final paint =
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF8B5CF6),
+              const Color(0xFF3B82F6),
+              const Color(0xFF1E40AF),
+            ],
+          ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
 
     // Animated circles
-    final circlePaint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
-      ..style = PaintingStyle.fill;
+    final circlePaint =
+        Paint()
+          ..color = Colors.white.withOpacity(0.1)
+          ..style = PaintingStyle.fill;
 
     final centerX = size.width * 0.5;
     final centerY = size.height * 0.3;
@@ -1169,7 +1720,10 @@ class ModernBackgroundPainter extends CustomPainter {
     );
 
     canvas.drawCircle(
-      Offset(centerX - math.sin(animationValue * 2 * math.pi) * 50, centerY + 100),
+      Offset(
+        centerX - math.sin(animationValue * 2 * math.pi) * 50,
+        centerY + 100,
+      ),
       20 + math.cos(animationValue * 4 * math.pi) * 8,
       circlePaint,
     );
