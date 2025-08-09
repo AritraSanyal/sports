@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/model/unified_model.dart';
 import 'package:flutter_app/theme/app_theme.dart';
+import 'package:flutter_app/screen/policy_screen.dart';
 import '../services/local_chatbot_service.dart';
 import 'companion_list_screen.dart';
 import 'unified_create_requirement.dart';
@@ -21,11 +22,13 @@ class ChatNavigationButton {
   final String text;
   final CompanionType type;
   final bool isFindCompanion;
+  final bool isPolicy;
 
   ChatNavigationButton({
     required this.text,
     required this.type,
     required this.isFindCompanion,
+    this.isPolicy = false,
   });
 }
 
@@ -72,6 +75,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       text: "Create Travel Group",
       type: CompanionType.travel,
       isFindCompanion: false,
+    ),
+    // Privacy Policy button
+    ChatNavigationButton(
+      text: "Privacy Policy",
+      type: CompanionType.sport, // unused when isPolicy is true
+      isFindCompanion: false,
+      isPolicy: true,
     ),
   ];
 
@@ -191,6 +201,115 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   void _handleNavigationButton(ChatNavigationButton button) {
+    if (button.isPolicy) {
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            text: "Open Privacy Policy",
+            isUser: true,
+            timestamp: DateTime.now(),
+          ),
+        );
+        _messages.add(
+          ChatMessage(
+            text: "Showing Privacy Policy...",
+            isUser: false,
+            timestamp: DateTime.now(),
+          ),
+        );
+      });
+
+      _scrollToBottom();
+
+      Future.delayed(const Duration(milliseconds: 800), () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (_) => const PolicyScreen(
+                  title: 'Privacy Policy',
+                  sections: [
+                    PolicySection(
+                      heading: '1. Introduction',
+                      body:
+                          'This Privacy Policy explains how we collect, use, and protect your personal information when you use our mobile application ("App"). By using the App, you agree to the collection and use of information in accordance with this policy.',
+                    ),
+                    PolicySection(
+                      heading: '2. Information We Collect',
+                      body:
+                          'We collect the following types of information:\n\n'
+                          'a. Personal Information\n'
+                          '- Email address\n'
+                          '- Password (securely stored via Firebase Authentication)\n'
+                          '- Profile Photo (uploaded and stored via Firebase Storage)\n\n'
+                          'b. User-Provided Content\n'
+                          '- Interests in sports, food, and travel\n'
+                          '- Group names and chat messages\n'
+                          '- Group participation data\n\n'
+                          'c. Automatically Collected Information\n'
+                          '- Device type and OS version\n'
+                          '- App usage data (only if analytics is added)\n'
+                          '- Timestamp of actions (e.g., group creation, messages)',
+                    ),
+                    PolicySection(
+                      heading: '3. How We Use Your Information',
+                      body:
+                          'We use your information to:\n'
+                          '- Create and manage your user account\n'
+                          '- Allow discovery of other users with shared interests\n'
+                          '- Enable group creation and real-time chat\n'
+                          '- Maintain security and prevent unauthorized access\n'
+                          '- Improve the functionality and experience of the App',
+                    ),
+                    PolicySection(
+                      heading: '4. Data Sharing & Disclosure',
+                      body:
+                          'We do not sell, trade, or rent your personal information to third parties. Your data is only shared in the following cases:\n'
+                          '- With group members (your name, photo, and messages)\n'
+                          '- With service providers (Firebase) for backend functionality\n'
+                          '- When required by law or legal process',
+                    ),
+                    PolicySection(
+                      heading: '5. Data Security',
+                      body:
+                          'We use Firebase Authentication and Firestore security rules to protect your data. All passwords are encrypted and never stored in plain text.\n\n'
+                          'We apply best practices to prevent unauthorized access, including user-based access control and encrypted communications.',
+                    ),
+                    PolicySection(
+                      heading: '6. Your Data Rights',
+                      body:
+                          'You can:\n'
+                          '- View or edit your profile information\n'
+                          '- Delete your account and associated data by contacting support\n'
+                          '- Revoke access by signing out of the App',
+                    ),
+                    PolicySection(
+                      heading: '7. Data Retention',
+                      body:
+                          'We retain your data as long as your account is active. If you delete your account, all associated data will be permanently removed from our systems.',
+                    ),
+                    PolicySection(
+                      heading: '8. Children’s Privacy',
+                      body:
+                          'Our app is not intended for children under the age of 18. We do not knowingly collect personal information from children under 18.',
+                    ),
+                    PolicySection(
+                      heading: '9. Changes to This Policy',
+                      body:
+                          'We may update this Privacy Policy from time to time. Any changes will be posted in the app or on our website, and the effective date will be updated.',
+                    ),
+                    PolicySection(
+                      heading: '10. Contact Us',
+                      body:
+                          'If you have questions or concerns about this Privacy Policy or your personal data, please contact us at:\nEmail: support@sportsapp.com',
+                    ),
+                  ],
+                ),
+          ),
+        );
+      });
+      return;
+    }
     final action = button.isFindCompanion ? "find" : "create";
     final type = button.type.toString().split('.').last;
 

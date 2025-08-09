@@ -317,6 +317,217 @@ class LocalChatbotService {
         "I'm here to help you with anything – finding companions, creating meetups, upgrading your plan, or just exploring features!",
     "connect":
         "Looking to connect with companions? 🤝 Just tap on the section that matches your interest — Sports, Food, or Travel Companion. Use filters to find your match and click 'Connect' to start chatting!",
+
+    // City-specific prompts
+    // Ahmedabad
+    "ahmedabad":
+        "In Ahmedabad, you can search for sports buddies, food buddies, and travel buddies. Just type 'ahmedabad sports buddy', 'ahmedabad food buddy', or 'ahmedabad travel buddy' to find your perfect match.",
+    "ahmedabad sports buddy":
+        "Looking for a sports companion in Ahmedabad? We’ll help you connect with people who share your passion for fitness and games.",
+    "ahmedabad food buddy":
+        "Want to explore food spots in Ahmedabad? Connect with fellow foodies who love to try new cuisines just like you.",
+    "ahmedabad travel buddy":
+        "Need a travel partner in Ahmedabad? Find someone to share your adventures and create lasting memories together.",
+
+    // Bangalore
+    "bangalore":
+        "In Bangalore, you can search for sports buddies, food buddies, and travel buddies. Just type 'bangalore sports buddy', 'bangalore food buddy', or 'bangalore travel buddy' to find your perfect match.",
+    "bangalore sports buddy":
+        "Looking for a sports companion in Bangalore? We’ll help you connect with people who share your passion for fitness and games.",
+    "bangalore food buddy":
+        "Want to explore food spots in Bangalore? Connect with fellow foodies who love to try new cuisines just like you.",
+    "bangalore travel buddy":
+        "Need a travel partner in Bangalore? Find someone to share your adventures and create lasting memories together.",
+
+    // Bhopal
+    "bhopal":
+        "In Bhopal, you can search for sports buddies, food buddies, and travel buddies. Just type 'bhopal sports buddy', 'bhopal food buddy', or 'bhopal travel buddy' to find your perfect match.",
+    "bhopal sports buddy":
+        "Looking for a sports companion in Bhopal? We’ll help you connect with people who share your passion for fitness and games.",
+    "bhopal food buddy":
+        "Want to explore food spots in Bhopal? Connect with fellow foodies who love to try new cuisines just like you.",
+    "bhopal travel buddy":
+        "Need a travel partner in Bhopal? Find someone to share your adventures and create lasting memories together.",
+
+    // Chandigarh
+    "chandigarh":
+        "In Chandigarh, you can search for sports buddies, food buddies, and travel buddies. Just type 'chandigarh sports buddy', 'chandigarh food buddy', or 'chandigarh travel buddy' to find your perfect match.",
+    "chandigarh sports buddy":
+        "Looking for a sports companion in Chandigarh? We’ll help you connect with people who share your passion for fitness and games.",
+    "chandigarh food buddy":
+        "Want to explore food spots in Chandigarh? Connect with fellow foodies who love to try new cuisines just like you.",
+    "chandigarh travel buddy":
+        "Need a travel partner in Chandigarh? Find someone to share your adventures and create lasting memories together.",
+
+    // Chennai
+    "chennai":
+        "In Chennai, you can search for sports buddies, food buddies, and travel buddies. Just type 'chennai sports buddy', 'chennai food buddy', or 'chennai travel buddy' to find your perfect match.",
+    "chennai sports buddy":
+        "Looking for a sports companion in Chennai? We’ll help you connect with people who share your passion for fitness and games.",
+    "chennai food buddy":
+        "Want to explore food spots in Chennai? Connect with fellow foodies who love to try new cuisines just like you.",
+    "chennai travel buddy":
+        "Need a travel partner in Chennai? Find someone to share your adventures and create lasting memories together.",
+
+    // Delhi
+    "delhi":
+        "In Delhi, you can search for sports buddies, food buddies, and travel buddies. Just type 'delhi sports buddy', 'delhi food buddy', or 'delhi travel buddy' to find your perfect match.",
+    "delhi sports buddy":
+        "Looking for a sports companion in Delhi? We’ll help you connect with people who share your passion for fitness and games.",
+    "delhi food buddy":
+        "Want to explore food spots in Delhi? Connect with fellow foodies who love to try new cuisines just like you.",
+    "delhi travel buddy":
+        "Need a travel partner in Delhi? Find someone to share your adventures and create lasting memories together.",
+
+    // Hyderabad
+    "hyderabad":
+        "In Hyderabad, you can search for sports buddies, food buddies, and travel buddies. Just type 'hyderabad sports buddy', 'hyderabad food buddy', or 'hyderabad travel buddy' to find your perfect match.",
+    "hyderabad sports buddy":
+        "Looking for a sports companion in Hyderabad? We’ll help you connect with people who share your passion for fitness and games.",
+    "hyderabad food buddy":
+        "Want to explore food spots in Hyderabad? Connect with fellow foodies who love to try new cuisines just like you.",
+    "hyderabad travel buddy":
+        "Need a travel partner in Hyderabad? Find someone to share your adventures and create lasting memories together.",
+
+    // Indore
+    "indore":
+        "In Indore, you can search for sports buddies, food buddies, and travel buddies. Just type 'indore sports buddy', 'indore food buddy', or 'indore travel buddy' to find your perfect match.",
+    "indore sports buddy":
+        "Looking for a sports companion in Indore? We’ll help you connect with people who share your passion for fitness and games.",
+    "indore food buddy":
+        "Want to explore food spots in Indore? Connect with fellow foodies who love to try new cuisines just like you.",
+    "indore travel buddy":
+        "Need a travel partner in Indore? Find someone to share your adventures and create lasting memories together.",
+
+    // Jaipur
+    "jaipur":
+        "In Jaipur, you can search for sports buddies, food buddies, and travel buddies. Just type 'jaipur sports buddy', 'jaipur food buddy', or 'jaipur travel buddy' to find your perfect match.",
+    "jaipur sports buddy":
+        "Looking for a sports companion in Jaipur? We’ll help you connect with people who share your passion for fitness and games.",
+    "jaipur food buddy":
+        "Want to explore food spots in Jaipur? Connect with fellow foodies who love to try new cuisines just like you.",
+    "jaipur travel buddy":
+        "Need a travel partner in Jaipur? Find someone to share your adventures and create lasting memories together.",
+
+    // Kanpur
+    "kanpur":
+        "In Kanpur, you can search for sports buddies, food buddies, and travel buddies. Just type 'kanpur sports buddy', 'kanpur food buddy', or 'kanpur travel buddy' to find your perfect match.",
+    "kanpur sports buddy":
+        "Looking for a sports companion in Kanpur? We’ll help you connect with people who share your passion for fitness and games.",
+    "kanpur food buddy":
+        "Want to explore food spots in Kanpur? Connect with fellow foodies who love to try new cuisines just like you.",
+    "kanpur travel buddy":
+        "Need a travel partner in Kanpur? Find someone to share your adventures and create lasting memories together.",
+
+    // Kochi
+    "kochi":
+        "In Kochi, you can search for sports buddies, food buddies, and travel buddies. Just type 'kochi sports buddy', 'kochi food buddy', or 'kochi travel buddy' to find your perfect match.",
+    "kochi sports buddy":
+        "Looking for a sports companion in Kochi? We’ll help you connect with people who share your passion for fitness and games.",
+    "kochi food buddy":
+        "Want to explore food spots in Kochi? Connect with fellow foodies who love to try new cuisines just like you.",
+    "kochi travel buddy":
+        "Need a travel partner in Kochi? Find someone to share your adventures and create lasting memories together.",
+
+    // Kolkata
+    "kolkata":
+        "In Kolkata, you can search for sports buddies, food buddies, and travel buddies. Just type 'kolkata sports buddy', 'kolkata food buddy', or 'kolkata travel buddy' to find your perfect match.",
+    "kolkata sports buddy":
+        "Looking for a sports companion in Kolkata? We’ll help you connect with people who share your passion for fitness and games.",
+    "kolkata food buddy":
+        "Want to explore food spots in Kolkata? Connect with fellow foodies who love to try new cuisines just like you.",
+    "kolkata travel buddy":
+        "Need a travel partner in Kolkata? Find someone to share your adventures and create lasting memories together.",
+
+    // Lucknow
+    "lucknow":
+        "In Lucknow, you can search for sports buddies, food buddies, and travel buddies. Just type 'lucknow sports buddy', 'lucknow food buddy', or 'lucknow travel buddy' to find your perfect match.",
+    "lucknow sports buddy":
+        "Looking for a sports companion in Lucknow? We’ll help you connect with people who share your passion for fitness and games.",
+    "lucknow food buddy":
+        "Want to explore food spots in Lucknow? Connect with fellow foodies who love to try new cuisines just like you.",
+    "lucknow travel buddy":
+        "Need a travel partner in Lucknow? Find someone to share your adventures and create lasting memories together.",
+
+    // Mumbai
+    "mumbai":
+        "In Mumbai, you can search for sports buddies, food buddies, and travel buddies. Just type 'mumbai sports buddy', 'mumbai food buddy', or 'mumbai travel buddy' to find your perfect match.",
+    "mumbai sports buddy":
+        "Looking for a sports companion in Mumbai? We’ll help you connect with people who share your passion for fitness and games.",
+    "mumbai food buddy":
+        "Want to explore food spots in Mumbai? Connect with fellow foodies who love to try new cuisines just like you.",
+    "mumbai travel buddy":
+        "Need a travel partner in Mumbai? Find someone to share your adventures and create lasting memories together.",
+
+    // Nagpur
+    "nagpur":
+        "In Nagpur, you can search for sports buddies, food buddies, and travel buddies. Just type 'nagpur sports buddy', 'nagpur food buddy', or 'nagpur travel buddy' to find your perfect match.",
+    "nagpur sports buddy":
+        "Looking for a sports companion in Nagpur? We’ll help you connect with people who share your passion for fitness and games.",
+    "nagpur food buddy":
+        "Want to explore food spots in Nagpur? Connect with fellow foodies who love to try new cuisines just like you.",
+    "nagpur travel buddy":
+        "Need a travel partner in Nagpur? Find someone to share your adventures and create lasting memories together.",
+
+    // Patna
+    "patna":
+        "In Patna, you can search for sports buddies, food buddies, and travel buddies. Just type 'patna sports buddy', 'patna food buddy', or 'patna travel buddy' to find your perfect match.",
+    "patna sports buddy":
+        "Looking for a sports companion in Patna? We’ll help you connect with people who share your passion for fitness and games.",
+    "patna food buddy":
+        "Want to explore food spots in Patna? Connect with fellow foodies who love to try new cuisines just like you.",
+    "patna travel buddy":
+        "Need a travel partner in Patna? Find someone to share your adventures and create lasting memories together.",
+
+    // Pune
+    "pune":
+        "In Pune, you can search for sports buddies, food buddies, and travel buddies. Just type 'pune sports buddy', 'pune food buddy', or 'pune travel buddy' to find your perfect match.",
+    "pune sports buddy":
+        "Looking for a sports companion in Pune? We’ll help you connect with people who share your passion for fitness and games.",
+    "pune food buddy":
+        "Want to explore food spots in Pune? Connect with fellow foodies who love to try new cuisines just like you.",
+    "pune travel buddy":
+        "Need a travel partner in Pune? Find someone to share your adventures and create lasting memories together.",
+
+    // Ranchi
+    "ranchi":
+        "In Ranchi, you can search for sports buddies, food buddies, and travel buddies. Just type 'ranchi sports buddy', 'ranchi food buddy', or 'ranchi travel buddy' to find your perfect match.",
+    "ranchi sports buddy":
+        "Looking for a sports companion in Ranchi? We’ll help you connect with people who share your passion for fitness and games.",
+    "ranchi food buddy":
+        "Want to explore food spots in Ranchi? Connect with fellow foodies who love to try new cuisines just like you.",
+    "ranchi travel buddy":
+        "Need a travel partner in Ranchi? Find someone to share your adventures and create lasting memories together.",
+
+    // Surat
+    "surat":
+        "In Surat, you can search for sports buddies, food buddies, and travel buddies. Just type 'surat sports buddy', 'surat food buddy', or 'surat travel buddy' to find your perfect match.",
+    "surat sports buddy":
+        "Looking for a sports companion in Surat? We’ll help you connect with people who share your passion for fitness and games.",
+    "surat food buddy":
+        "Want to explore food spots in Surat? Connect with fellow foodies who love to try new cuisines just like you.",
+    "surat travel buddy":
+        "Need a travel partner in Surat? Find someone to share your adventures and create lasting memories together.",
+
+    // Visakhapatnam
+    "visakhapatnam":
+        "In Visakhapatnam, you can search for sports buddies, food buddies, and travel buddies. Just type 'visakhapatnam sports buddy', 'visakhapatnam food buddy', or 'visakhapatnam travel buddy' to find your perfect match.",
+    "visakhapatnam sports buddy":
+        "Looking for a sports companion in Visakhapatnam? We’ll help you connect with people who share your passion for fitness and games.",
+    "visakhapatnam food buddy":
+        "Want to explore food spots in Visakhapatnam? Connect with fellow foodies who love to try new cuisines just like you.",
+    "visakhapatnam travel buddy":
+        "Need a travel partner in Visakhapatnam? Find someone to share your adventures and create lasting memories together.",
+
+    // City lists
+    "available cities list":
+        "We currently help you find companions in these cities: Ahmedabad, Bangalore, Bhopal, Chandigarh, Chennai, Delhi, Hyderabad, Indore, Jaipur, Kanpur, Kochi, Kolkata, Lucknow, Mumbai, Nagpur, Patna, Pune, Ranchi, Surat, Visakhapatnam. You can find sports buddy, food buddy, and travel buddy in all these locations.",
+    "city":
+        "We currently help you find companions in these cities: Ahmedabad, Bangalore, Bhopal, Chandigarh, Chennai, Delhi, Hyderabad, Indore, Jaipur, Kanpur, Kochi, Kolkata, Lucknow, Mumbai, Nagpur, Patna, Pune, Ranchi, Surat, Visakhapatnam. You can find sports buddy, food buddy, and travel buddy in all these locations.",
+    "all cities":
+        "We currently help you find companions in these cities: Ahmedabad, Bangalore, Bhopal, Chandigarh, Chennai, Delhi, Hyderabad, Indore, Jaipur, Kanpur, Kochi, Kolkata, Lucknow, Mumbai, Nagpur, Patna, Pune, Ranchi, Surat, Visakhapatnam. You can find sports buddy, food buddy, and travel buddy in all these locations.",
+    "cities":
+        "We currently help you find companions in these cities: Ahmedabad, Bangalore, Bhopal, Chandigarh, Chennai, Delhi, Hyderabad, Indore, Jaipur, Kanpur, Kochi, Kolkata, Lucknow, Mumbai, Nagpur, Patna, Pune, Ranchi, Surat, Visakhapatnam. You can find sports buddy, food buddy, and travel buddy in all these locations.",
   };
 
   // Activity-specific responses
